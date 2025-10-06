@@ -49,7 +49,7 @@ export const Header: React.FC<Props> = ({
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTitleQuery(event.target.value);
-  };
+  }
 
   useEffect(() => {
     if (!submitting && inputRef.current) {
