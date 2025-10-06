@@ -104,7 +104,7 @@ export const TodoItem: React.FC<Props> = ({
     if (event.key === 'Escape') {
       setEditingTodo(null);
     }
-  }
+  };
 
   useEffect(() => {
     if (editingTodo !== null && inputRef.current) {
