@@ -97,7 +97,7 @@ export const TodoItem: React.FC<Props> = ({
       return;
     }
 
-    setEditingTodo(editingTodo);
+    setEditingTodo(selectedTodo);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -131,7 +131,7 @@ export const TodoItem: React.FC<Props> = ({
           />
         </label>
 
-        {editingTodo !== null && editingTodo?.id === todo?.id ? (
+        {(editingTodo !== null && editingTodo?.id === todo?.id) ? (
           <form onSubmit={handleSubmit}>
             <input
               ref={inputRef}
