@@ -59,7 +59,7 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     getAllTodos();
-  }, []);
+  }, [])
 
   const TodosFilter = (filterBy: FilterType): Todo[] => {
     switch (filterBy) {

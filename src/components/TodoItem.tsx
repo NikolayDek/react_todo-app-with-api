@@ -131,7 +131,7 @@ export const TodoItem: React.FC<Props> = ({
           />
         </label>
 
-        {(editingTodo !== null && editingTodo?.id === todo?.id) ? (
+        {editingTodo !== null && editingTodo?.id === todo?.id ? (
           <form onSubmit={handleSubmit}>
             <input
               ref={inputRef}
