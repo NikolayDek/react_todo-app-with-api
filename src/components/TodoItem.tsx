@@ -29,6 +29,13 @@ export const TodoItem: React.FC<Props> = ({
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+useEffect(() => {
+    if (editingTodo !== null && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editingTodo]);
+
   const currentTodo = todo || tempTodo;
 
   if (!currentTodo) {
@@ -56,12 +63,12 @@ export const TodoItem: React.FC<Props> = ({
       await onDeletedTodo!(editingTodo!.id)
         .then(() => setEditingTodo(null))
         .catch(() => {
-          inputRef.current?.focus();
-          inputRef.current?.select();
+          setTimeout(() => {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+          }, 0);
         })
-        .finally(() => {
-          setSubmitting(false);
-        });
+        .finally(() => setSubmitting(false));
     } else if (trimmedQuery !== editingTodo?.title) {
       setSubmitting(true);
 
@@ -72,14 +79,13 @@ export const TodoItem: React.FC<Props> = ({
       await onEditingTodo(editingTodo!, trimmedQuery)
         .then(() => setEditingTodo(null))
         .catch(() => {
-          inputRef.current?.focus();
-          inputRef.current?.select();
+          setTimeout(() => {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+          }, 0);
         })
-        .finally(() => {
-          setSubmitting(false);
-        });
+        .finally(() => setSubmitting(false));
     } else {
-      setEditingTodo(null);
       setSubmitting(false);
     }
   };
@@ -94,10 +100,15 @@ export const TodoItem: React.FC<Props> = ({
     if (!trimmedQuery.length) {
       setSubmitting(true);
 
-      await onDeletedTodo!(editingTodo!.id).finally(() => {
-        setEditingTodo(null);
-        setSubmitting(false);
-      });
+      await onDeletedTodo!(editingTodo!.id)
+        .then(() => setEditingTodo(null))
+        .catch(() => {
+          setTimeout(() => {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+          }, 0);
+        })
+        .finally(() => setSubmitting(false));
     } else if (trimmedQuery !== editingTodo?.title) {
       setSubmitting(true);
 
@@ -105,12 +116,16 @@ export const TodoItem: React.FC<Props> = ({
         return Promise.reject();
       }
 
-      await onEditingTodo(editingTodo!, trimmedQuery).finally(() => {
-        setEditingTodo(null);
-        setSubmitting(false);
-      });
+      await onEditingTodo(editingTodo!, trimmedQuery)
+        .then(() => setEditingTodo(null))
+        .catch(() => {
+          setTimeout(() => {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+          }, 0);
+        })
+        .finally(() => setSubmitting(false));
     } else {
-      setEditingTodo(null);
       setSubmitting(false);
     }
   };
@@ -130,13 +145,6 @@ export const TodoItem: React.FC<Props> = ({
       setEditingTodo(null);
     }
   };
-
-  useEffect(() => {
-    if (editingTodo !== null && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [editingTodo]);
 
   const isLoaderActive = Boolean(
     tempTodo ||

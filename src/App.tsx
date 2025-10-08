@@ -181,7 +181,7 @@ export const App: React.FC = () => {
   function handleEditingTodo(editingTodo: Todo, title: string) {
     setErrorMessage(ErrorMessages.none);
 
-    let updatedTodo = todos.find(todo => todo.title === editingTodo.title);
+    let updatedTodo = todos.find(todo => todo.id === editingTodo.id);
 
     if (!updatedTodo) {
       return Promise.reject();
@@ -194,7 +194,7 @@ export const App: React.FC = () => {
         setTodos(currentTodos => {
           const newTodos = [...currentTodos];
           const index = currentTodos.findIndex(
-            todo => todo.title === editingTodo.title,
+            todo => todo.id === editingTodo.id,
           );
 
           newTodos.splice(index, 1, todoFromServer);
