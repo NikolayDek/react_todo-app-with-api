@@ -87,6 +87,7 @@ export const TodoItem: React.FC<Props> = ({
         .finally(() => setSubmitting(false));
     } else {
       setSubmitting(false);
+      setEditingTodo(null);
     }
   };
 
