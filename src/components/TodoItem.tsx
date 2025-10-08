@@ -29,7 +29,7 @@ export const TodoItem: React.FC<Props> = ({
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-useEffect(() => {
+  useEffect(() => {
     if (editingTodo !== null && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
@@ -127,6 +127,7 @@ useEffect(() => {
         .finally(() => setSubmitting(false));
     } else {
       setSubmitting(false);
+      setEditingTodo(null);
     }
   };
 
