@@ -1,6 +1,12 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  // useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   addTodo,
   deleteTodo,
@@ -47,19 +53,11 @@ export const App: React.FC = () => {
     }
   };
 
-  const getAllTodos = async () => {
-    try {
-      const allTodos = await getTodos();
-
-      setTodos(allTodos);
-    } catch {
-      handleErrorMessage(ErrorMessages.todosLoadError);
-    }
-  };
-
   useEffect(() => {
-    getAllTodos();
-  }, [])
+    getTodos()
+      .then(todosFromServer => setTodos(todosFromServer))
+      .catch(() => handleErrorMessage(ErrorMessages.todosLoadError));
+  }, []);
 
   const TodosFilter = (filterBy: FilterType): Todo[] => {
     switch (filterBy) {

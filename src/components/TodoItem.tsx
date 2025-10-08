@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/label-has-associated-control */
+/* eslint-disable jsx-a11y/control-has-associated-label */
+// eslint-disable-next-line react-hooks/rules-of-hooks
 import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { Todo } from '../types/Todo';
 import classNames from 'classnames';
@@ -26,6 +29,14 @@ export const TodoItem: React.FC<Props> = ({
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const currentTodo = todo || tempTodo;
+
+  if (!currentTodo) {
+    return null;
+  }
+
+  const { title, id, completed } = currentTodo;
+
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     setTitleQuery(event.target.value);
   };
@@ -33,28 +44,40 @@ export const TodoItem: React.FC<Props> = ({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (submitting) {
+      return;
+    }
+
     const trimmedQuery = titleQuery.trim();
 
     if (!trimmedQuery.length) {
       setSubmitting(true);
 
-      await onDeletedTodo!(editingTodo!.id).finally(() => {
-        setEditingTodo(null);
-        setSubmitting(false);
-      });
-    }
-
-    if (trimmedQuery !== editingTodo?.title) {
+      await onDeletedTodo!(editingTodo!.id)
+        .then(() => setEditingTodo(null))
+        .catch(() => {
+          inputRef.current?.focus();
+          inputRef.current?.select();
+        })
+        .finally(() => {
+          setSubmitting(false);
+        });
+    } else if (trimmedQuery !== editingTodo?.title) {
       setSubmitting(true);
 
       if (!onEditingTodo) {
         return Promise.reject();
       }
 
-      await onEditingTodo(editingTodo!, trimmedQuery).finally(() => {
-        setEditingTodo(null);
-        setSubmitting(false);
-      });
+      await onEditingTodo(editingTodo!, trimmedQuery)
+        .then(() => setEditingTodo(null))
+        .catch(() => {
+          inputRef.current?.focus();
+          inputRef.current?.select();
+        })
+        .finally(() => {
+          setSubmitting(false);
+        });
     } else {
       setEditingTodo(null);
       setSubmitting(false);
@@ -64,6 +87,10 @@ export const TodoItem: React.FC<Props> = ({
   const handleBlur = async () => {
     const trimmedQuery = titleQuery.trim();
 
+    if (submitting) {
+      return;
+    }
+
     if (!trimmedQuery.length) {
       setSubmitting(true);
 
@@ -71,9 +98,7 @@ export const TodoItem: React.FC<Props> = ({
         setEditingTodo(null);
         setSubmitting(false);
       });
-    }
-
-    if (trimmedQuery !== editingTodo?.title) {
+    } else if (trimmedQuery !== editingTodo?.title) {
       setSubmitting(true);
 
       if (!onEditingTodo) {
@@ -113,76 +138,71 @@ export const TodoItem: React.FC<Props> = ({
     }
   }, [editingTodo]);
 
+  const isLoaderActive = Boolean(
+    tempTodo ||
+      deletedTodosId?.includes(id ?? -1) ||
+      toggledTodosId?.includes(id ?? -1) ||
+      (submitting && editingTodo?.id === id),
+  );
+
   return (
-    <>
-      {/* This is a completed todo */}
-      <div
-        data-cy="Todo"
-        className={classNames('todo', todo?.completed ? 'completed' : '')}
-      >
-        {/* eslint-disable jsx-a11y/label-has-associated-control */}
-        <label className="todo__status-label">
+    <div
+      data-cy="Todo"
+      className={classNames('todo', { completed: completed })}
+    >
+      <label className="todo__status-label">
+        <input
+          data-cy="TodoStatus"
+          type="checkbox"
+          className="todo__status"
+          checked={completed}
+          onChange={() => onToggle!(todo!)}
+        />
+      </label>
+
+      {editingTodo !== null && editingTodo?.id === id ? (
+        <form onSubmit={handleSubmit}>
           <input
-            data-cy="TodoStatus"
-            type="checkbox"
-            className="todo__status"
-            checked={todo?.completed}
-            onChange={() => onToggle!(todo!)}
+            ref={inputRef}
+            data-cy="TodoTitleField"
+            type="text"
+            className="todo__title-field"
+            placeholder="Empty todo will be deleted"
+            value={titleQuery}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
           />
-        </label>
+        </form>
+      ) : (
+        <>
+          <span
+            data-cy="TodoTitle"
+            className="todo__title"
+            onDoubleClick={() => handleEditingTodo(todo!)}
+          >
+            {title || tempTodo?.title}
+          </span>
+          <button
+            type="button"
+            className="todo__remove"
+            data-cy="TodoDelete"
+            onClick={() => onDeletedTodo!(id)}
+          >
+            ×
+          </button>
+        </>
+      )}
 
-        {editingTodo !== null && editingTodo?.id === todo?.id ? (
-          <form onSubmit={handleSubmit}>
-            <input
-              ref={inputRef}
-              data-cy="TodoTitleField"
-              type="text"
-              className="todo__title-field"
-              placeholder="Empty todo will be deleted"
-              value={titleQuery}
-              onChange={handleInputChange}
-              onBlur={handleBlur}
-              onKeyDown={handleKeyDown}
-            />
-          </form>
-        ) : (
-          <>
-            {/* eslint-enable jsx-a11y/label-has-associated-control */}
-            <span
-              data-cy="TodoTitle"
-              className="todo__title"
-              onDoubleClick={() => handleEditingTodo(todo!)}
-            >
-              {todo?.title || tempTodo?.title}
-            </span>
-            {/* Remove button appears only on hover */}
-            <button
-              type="button"
-              className="todo__remove"
-              data-cy="TodoDelete"
-              onClick={() => onDeletedTodo!(todo!.id)}
-            >
-              ×
-            </button>
-          </>
-        )}
-
-        {/* overlay will cover the todo while it is being deleted or updated */}
-        <div
-          data-cy="TodoLoader"
-          className={classNames('modal', 'overlay', {
-            'is-active': Boolean(
-              tempTodo ||
-                deletedTodosId?.includes(todo?.id ?? -1) ||
-                toggledTodosId?.includes(todo?.id ?? -1) ||
-                (submitting && editingTodo?.id === todo?.id),
-            ),
-          })}
-        >
-          <div className="modal-background has-background-white-ter" />
-          <div className="loader" />
-        </div>
+      <div
+        data-cy="TodoLoader"
+        className={classNames('modal', 'overlay', {
+          'is-active': isLoaderActive,
+        })}
+      >
+        <div className="modal-background has-background-white-ter" />
+        <div className="loader" />
       </div>
-    </>
+    </div>
   );
 };

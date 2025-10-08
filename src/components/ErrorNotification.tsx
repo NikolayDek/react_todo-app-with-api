@@ -12,8 +12,6 @@ export const ErrorNotification: React.FC<Props> = ({
   onHideErrorButtonClick,
 }) => {
   return (
-    //{/* DON'T use conditional rendering to hide the notification */}
-    //{/* Add the 'hidden' class to hide the message smoothly */}
     <div
       data-cy="ErrorNotification"
       className={classNames(
@@ -21,7 +19,7 @@ export const ErrorNotification: React.FC<Props> = ({
         'is-danger',
         'is-light',
         'has-text-weight-normal',
-        errorMessage ? '' : 'hidden',
+        { hidden: !errorMessage },
       )}
     >
       <button
