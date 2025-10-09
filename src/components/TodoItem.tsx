@@ -1,6 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-// eslint-disable-next-line react-hooks/rules-of-hooks
 import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { Todo } from '../types/Todo';
 import classNames from 'classnames';
@@ -9,20 +8,18 @@ type Props = {
   todo?: Todo;
   tempTodo?: Todo;
   onDeletedTodo?: (id: number) => Promise<void>;
-  deletedTodosId?: number[];
   onToggle?: (todo: Todo) => void;
-  toggledTodosId?: number[];
-  onEditingTodo?: (todo: Todo, title: string) => Promise<void>;
+  loadingTodoIds?: number[];
+  onEditingTodo?: (id: number, title: string) => Promise<void>;
 };
 
 export const TodoItem: React.FC<Props> = ({
   todo,
   tempTodo,
   onDeletedTodo,
-  deletedTodosId,
   onToggle,
-  toggledTodosId,
-  onEditingTodo,
+  loadingTodoIds,
+  onEditingTodo = async () => {},
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [titleQuery, setTitleQuery] = useState('');
@@ -32,7 +29,6 @@ export const TodoItem: React.FC<Props> = ({
   useEffect(() => {
     if (editingTodo !== null && inputRef.current) {
       inputRef.current.focus();
-      inputRef.current.select();
     }
   }, [editingTodo]);
 
@@ -65,23 +61,17 @@ export const TodoItem: React.FC<Props> = ({
         .catch(() => {
           setTimeout(() => {
             inputRef.current?.focus();
-            inputRef.current?.select();
           }, 0);
         })
         .finally(() => setSubmitting(false));
     } else if (trimmedQuery !== editingTodo?.title) {
       setSubmitting(true);
 
-      if (!onEditingTodo) {
-        return Promise.reject();
-      }
-
-      await onEditingTodo(editingTodo!, trimmedQuery)
+      await onEditingTodo(editingTodo!.id, trimmedQuery)
         .then(() => setEditingTodo(null))
         .catch(() => {
           setTimeout(() => {
             inputRef.current?.focus();
-            inputRef.current?.select();
           }, 0);
         })
         .finally(() => setSubmitting(false));
@@ -106,23 +96,17 @@ export const TodoItem: React.FC<Props> = ({
         .catch(() => {
           setTimeout(() => {
             inputRef.current?.focus();
-            inputRef.current?.select();
           }, 0);
         })
         .finally(() => setSubmitting(false));
     } else if (trimmedQuery !== editingTodo?.title) {
       setSubmitting(true);
 
-      if (!onEditingTodo) {
-        return Promise.reject();
-      }
-
-      await onEditingTodo(editingTodo!, trimmedQuery)
+      await onEditingTodo(editingTodo!.id, trimmedQuery)
         .then(() => setEditingTodo(null))
         .catch(() => {
           setTimeout(() => {
             inputRef.current?.focus();
-            inputRef.current?.select();
           }, 0);
         })
         .finally(() => setSubmitting(false));
@@ -134,11 +118,6 @@ export const TodoItem: React.FC<Props> = ({
 
   const handleEditingTodo = (selectedTodo: Todo) => {
     setTitleQuery(selectedTodo.title);
-
-    if (!onEditingTodo) {
-      return;
-    }
-
     setEditingTodo(selectedTodo);
   };
 
@@ -150,9 +129,8 @@ export const TodoItem: React.FC<Props> = ({
 
   const isLoaderActive = Boolean(
     tempTodo ||
-      deletedTodosId?.includes(id ?? -1) ||
-      toggledTodosId?.includes(id ?? -1) ||
-      (submitting && editingTodo?.id === id),
+      loadingTodoIds?.includes(id ?? -1) ||
+      (!!loadingTodoIds?.length && editingTodo?.id === id),
   );
 
   return (
@@ -170,7 +148,7 @@ export const TodoItem: React.FC<Props> = ({
         />
       </label>
 
-      {editingTodo !== null && editingTodo?.id === id ? (
+      {!!editingTodo && editingTodo?.id === id ? (
         <form onSubmit={handleSubmit}>
           <input
             ref={inputRef}

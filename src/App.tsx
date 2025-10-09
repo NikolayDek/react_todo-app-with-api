@@ -1,7 +1,6 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, {
-  // useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -29,8 +28,7 @@ export const App: React.FC = () => {
   );
   const [filterType, setFilterType] = useState<FilterType>(FilterType.all);
   const [tempTodo, setTempTodo] = useState<Todo | null>(null);
-  const [deletedTodosId, setDeletedTodosId] = useState<number[]>([]);
-  const [toggledTodosId, setToggledTodosId] = useState<number[]>([]);
+  const [loadingTodoIds, setLoadingTodoIds] = useState<number[]>([]);
   const errorTimer = useRef<number | null>(null);
 
   const completedTodos = useMemo(
@@ -59,7 +57,7 @@ export const App: React.FC = () => {
       .catch(() => handleErrorMessage(ErrorMessages.todosLoadError));
   }, []);
 
-  const TodosFilter = (filterBy: FilterType): Todo[] => {
+  const todosFilter = (filterBy: FilterType): Todo[] => {
     switch (filterBy) {
       case FilterType.all:
         return todos;
@@ -85,10 +83,11 @@ export const App: React.FC = () => {
       .then(todoFromServer => {
         setTodos(currentTodos => [...currentTodos, todoFromServer]);
       })
-      .catch(() => {
+      .catch((error) => {
         handleErrorMessage(ErrorMessages.todoAddError);
 
-        return Promise.reject();
+        // return Promise.reject();
+        throw error;
       })
       .finally(() => {
         setTempTodo(null);
@@ -97,7 +96,7 @@ export const App: React.FC = () => {
 
   function handleDeleteTodo(id: number) {
     setErrorMessage(ErrorMessages.none);
-    setDeletedTodosId(prev => [...prev, id]);
+    setLoadingTodoIds(prev => [...prev, id]);
 
     return deleteTodo(id)
       .then(() => {
@@ -109,7 +108,7 @@ export const App: React.FC = () => {
         return Promise.reject();
       })
       .finally(() =>
-        setDeletedTodosId(prev => prev.filter(prevID => prevID !== id)),
+        setLoadingTodoIds(prev => prev.filter(prevID => prevID !== id)),
       );
   }
 
@@ -125,7 +124,7 @@ export const App: React.FC = () => {
 
   function handleToggleTodo(selectedTodo: Todo) {
     setErrorMessage(ErrorMessages.none);
-    setToggledTodosId(prevIDs => [...prevIDs, selectedTodo.id]);
+    setLoadingTodoIds(prevIDs => [...prevIDs, selectedTodo.id]);
 
     let updatedTodo = todos.find(todo => todo.id === selectedTodo.id);
 
@@ -154,7 +153,7 @@ export const App: React.FC = () => {
         return Promise.reject();
       })
       .finally(() =>
-        setToggledTodosId(prevIDs =>
+        setLoadingTodoIds(prevIDs =>
           prevIDs.filter(id => id !== selectedTodo.id),
         ),
       );
@@ -178,10 +177,11 @@ export const App: React.FC = () => {
     });
   }
 
-  function handleEditingTodo(editingTodo: Todo, title: string) {
+  function handleEditingTodo(editingId: number, title: string) {
     setErrorMessage(ErrorMessages.none);
+    setLoadingTodoIds(prevIDs => [...prevIDs, editingId]);
 
-    let updatedTodo = todos.find(todo => todo.id === editingTodo.id);
+    let updatedTodo = todos.find(todo => todo.id === editingId);
 
     if (!updatedTodo) {
       return Promise.reject();
@@ -194,7 +194,7 @@ export const App: React.FC = () => {
         setTodos(currentTodos => {
           const newTodos = [...currentTodos];
           const index = currentTodos.findIndex(
-            todo => todo.id === editingTodo.id,
+            todo => todo.id === editingId,
           );
 
           newTodos.splice(index, 1, todoFromServer);
@@ -206,23 +206,29 @@ export const App: React.FC = () => {
         handleErrorMessage(ErrorMessages.todosUpdateError);
 
         return Promise.reject();
-      });
+      })
+      .finally(() =>
+        setLoadingTodoIds(prevIDs =>
+          prevIDs.filter(id => id !== editingId),
+        ),
+      );
   }
 
-  const filteredTodos = TodosFilter(filterType);
+  const filteredTodos = useMemo(() => {
+    return todosFilter(filterType)
+  }, [filterType, todos]);
+
   const itemsLeft = todos.filter(todo => !todo.completed).length;
 
   return (
     <div className="todoapp">
       <h1 className="todoapp__title">todos</h1>
-
       <div className="todoapp__content">
         <Header
           todos={todos}
           onErrorMessage={handleErrorMessage}
           onAddTodo={handleAddTodo}
-          deletedTodosId={deletedTodosId}
-          toggleTodosId={toggledTodosId}
+          toggleTodosId={loadingTodoIds}
           toggleAllTodos={handleToggleAllTodos}
         />
 
@@ -231,10 +237,9 @@ export const App: React.FC = () => {
             filteredTodos={filteredTodos}
             tempTodo={tempTodo}
             onDeletedTodo={handleDeleteTodo}
-            deletedTodosId={deletedTodosId}
             completedTodos={completedTodos}
             onToggle={handleToggleTodo}
-            toggleTodosId={toggledTodosId}
+            loadingTodoIds={loadingTodoIds}
             onEditingTodo={handleEditingTodo}
           />
         </section>

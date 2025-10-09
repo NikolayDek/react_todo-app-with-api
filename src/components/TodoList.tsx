@@ -6,20 +6,18 @@ type Props = {
   filteredTodos: Todo[];
   tempTodo: Todo | null;
   onDeletedTodo: (id: number) => Promise<void>;
-  deletedTodosId: number[];
   completedTodos: Todo[];
   onToggle: (todo: Todo) => void;
-  toggleTodosId: number[];
-  onEditingTodo: (todo: Todo, title: string) => Promise<void>;
+  loadingTodoIds: number[];
+  onEditingTodo: (id: number, title: string) => Promise<void>;
 };
 
 export const TodoList: React.FC<Props> = ({
   filteredTodos,
   tempTodo,
   onDeletedTodo,
-  deletedTodosId,
   onToggle,
-  toggleTodosId,
+  loadingTodoIds,
   onEditingTodo,
 }) => {
   return (
@@ -29,9 +27,8 @@ export const TodoList: React.FC<Props> = ({
           todo={todo}
           key={todo.id}
           onDeletedTodo={onDeletedTodo}
-          deletedTodosId={deletedTodosId}
           onToggle={onToggle}
-          toggledTodosId={toggleTodosId}
+          loadingTodoIds={loadingTodoIds}
           onEditingTodo={onEditingTodo}
         />
       ))}

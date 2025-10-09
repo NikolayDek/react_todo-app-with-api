@@ -7,7 +7,6 @@ type Props = {
   todos: Todo[];
   onErrorMessage: (error: ErrorMessages) => void;
   onAddTodo: (title: string) => Promise<void>;
-  deletedTodosId: number[];
   toggleTodosId: number[];
   toggleAllTodos: () => void;
 };
@@ -16,7 +15,6 @@ export const Header: React.FC<Props> = ({
   todos,
   onErrorMessage,
   onAddTodo,
-  deletedTodosId,
   toggleTodosId,
   toggleAllTodos,
 }) => {
@@ -55,7 +53,7 @@ export const Header: React.FC<Props> = ({
     if (!submitting && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [submitting, deletedTodosId, toggleTodosId]);
+  }, [submitting, toggleTodosId]);
 
   return (
     <header className="todoapp__header">
@@ -75,7 +73,6 @@ export const Header: React.FC<Props> = ({
           value={titleQuery}
           data-cy="NewTodoField"
           type="text"
-          name="inp"
           className="todoapp__new-todo"
           placeholder="What needs to be done?"
           disabled={submitting}
