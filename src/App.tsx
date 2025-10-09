@@ -1,11 +1,6 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   addTodo,
   deleteTodo,
@@ -57,7 +52,7 @@ export const App: React.FC = () => {
       .catch(() => handleErrorMessage(ErrorMessages.todosLoadError));
   }, []);
 
-  const todosFilter = (filterBy: FilterType): Todo[] => {
+  const todosFilter = useCallback((filterBy: FilterType): Todo[] => {
     switch (filterBy) {
       case FilterType.all:
         return todos;
@@ -65,8 +60,10 @@ export const App: React.FC = () => {
         return todos.filter(todo => !todo.completed);
       case FilterType.completed:
         return todos.filter(todo => todo.completed);
+      default:
+        return todos;
     }
-  };
+  }, [todos])
 
   function handleAddTodo(title: string) {
     const newTodo: Todo = {
@@ -83,7 +80,7 @@ export const App: React.FC = () => {
       .then(todoFromServer => {
         setTodos(currentTodos => [...currentTodos, todoFromServer]);
       })
-      .catch((error) => {
+      .catch(error => {
         handleErrorMessage(ErrorMessages.todoAddError);
 
         // return Promise.reject();
@@ -193,9 +190,7 @@ export const App: React.FC = () => {
       .then(todoFromServer => {
         setTodos(currentTodos => {
           const newTodos = [...currentTodos];
-          const index = currentTodos.findIndex(
-            todo => todo.id === editingId,
-          );
+          const index = currentTodos.findIndex(todo => todo.id === editingId);
 
           newTodos.splice(index, 1, todoFromServer);
 
@@ -208,15 +203,13 @@ export const App: React.FC = () => {
         return Promise.reject();
       })
       .finally(() =>
-        setLoadingTodoIds(prevIDs =>
-          prevIDs.filter(id => id !== editingId),
-        ),
+        setLoadingTodoIds(prevIDs => prevIDs.filter(id => id !== editingId)),
       );
   }
 
   const filteredTodos = useMemo(() => {
-    return todosFilter(filterType)
-  }, [filterType, todos]);
+    return todosFilter(filterType);
+  }, [filterType, todosFilter]);
 
   const itemsLeft = todos.filter(todo => !todo.completed).length;
 
